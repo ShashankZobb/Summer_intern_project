@@ -29,6 +29,14 @@ const getBookedRooms = async () => {
     console.log(e);
   }
 };
+const getSlots = async (room, date) => {
+  try {
+    const data = await axios.get(`${url}/api/rooms/getSlots/${room}/${date}`);
+    return data.data;
+  } catch (e){
+    console.log(e);
+  }
+}
 
 const bookRoom = async (roomDetails) => {
   try {
@@ -84,5 +92,6 @@ export {
   getBookedRooms,
   getAvailableRooms,
   getRoomNumbers,
-  addUser
+  addUser,
+  getSlots
 };

@@ -27,8 +27,7 @@ const RoomCard = ({ room, handleDelete, book }) => {
           Event: {room.event}
           <br />
           Date: {date.toLocaleDateString()} <br />
-          Start time: {room.start_time} <br />
-          End time: {room.end_time} <br />
+          slot: {room.slot} <br />
         </Card.Text>
         {book ? (
           ""

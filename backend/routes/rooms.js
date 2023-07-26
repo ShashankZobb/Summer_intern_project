@@ -28,9 +28,23 @@ Router.get("/bookedRooms/:username", (req, res) => {
   );
 });
 
+Router.get("/getSlots/:room/:date", (req, res) => {
+  room = req.params.room;
+  date = req.params.date;
+  const query = `SELECT * FROM booking where roomNumber = "${room}" and event_date = "${date}"`;
+  db.query(query, (err, rows, fields) => {
+    if(err){
+      throw err;
+    }
+    else{
+      res.status(200).send(rows);
+    }
+  })
+});
+
 Router.post("/bookRoom", (req, res) => {
   const roomDetails = req.body;
-  const query = `INSERT INTO booking (room_id,roomNumber,name,email,phoneNumber,event,start_time,end_time,event_date) values("${roomDetails.room_id}","${roomDetails.room}","${roomDetails.name}","${roomDetails.email}","${roomDetails.phoneNumber}","${roomDetails.event}","${roomDetails.startTime}","${roomDetails.endTime}","${roomDetails.date}")`;
+  const query = `INSERT INTO booking (room_id,roomNumber,name,email,phoneNumber,event,slot,event_date) values("${roomDetails.room_id}","${roomDetails.room}","${roomDetails.name}","${roomDetails.email}","${roomDetails.phoneNumber}","${roomDetails.event}","${roomDetails.slot}","${roomDetails.date}")`;
   db.query(query, (err, rows, fields) => {
     if (!err) {
       res.status(200).send();
@@ -72,7 +86,7 @@ Router.delete("/deleteRoom/:bookingId", (req, res) => {
 });
 
 Router.get("/availableRooms", (req, res) => {
-  const query = `SELECT * FROM rooms WHERE room_id NOT IN (SELECT room_id from booking)`;
+  const query = `SELECT * FROM rooms`;
   db.query(query, (err, rows, fields) => {
     if (!err) {
       res.status(200).send(rows);
@@ -83,7 +97,7 @@ Router.get("/availableRooms", (req, res) => {
 });
 
 Router.get("/roomNumbers", (req, res) => {
-  const query = `SELECT roomNumber,room_id FROM rooms WHERE room_id NOT IN (SELECT room_id from booking)`;
+  const query = `SELECT roomNumber,room_id FROM rooms`;
   db.query(query, (err, rows, fields) => {
     if (!err) {
       res.status(200).send(rows);

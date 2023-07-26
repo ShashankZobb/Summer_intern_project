@@ -1,27 +1,41 @@
 import React, { useState, useEffect } from "react";
 import { Form, Col, Button } from "react-bootstrap";
-import { bookRoom, getRoomNumbers, updateRoom } from "../services";
+import { bookRoom, getRoomNumbers, updateRoom, getSlots } from "../services";
 import { auth } from "../Auth/firebase";
 import "../../App.css";
 
 const RoomForm = ({ roomData, update, handleClose }) => {
   const [event, setEvent] = useState(update ? roomData.event : "");
-  const [room, setRoom] = useState(update ? roomData.roomNumber : "");
-  const [date, setDate] = useState(update ? roomData.event_date : "");
-  const [startTime, setStartTime] = useState(update ? roomData.start_time : "");
-  const [endTime, setEndTime] = useState(update ? roomData.end_time : "");
+  let [room, setRoom] = useState(update ? roomData.roomNumber : "");
+  let [date, setDate] = useState(update ? roomData.event_date : "");
+  const [slot, setSlotData] = useState(update ? roomData.slot : "");
   const [phoneNumber, setPhoneNumber] = useState(
     update ? roomData.phoneNumber : ""
   );
   const [availableRooms, setAvailableRooms] = useState([]);
+  const [availableSlots, setAvailableSlots] = useState([]);
   useEffect(() => {
     async function getData() {
       const data = await getRoomNumbers();
       setAvailableRooms(data);
     }
-
     getData();
   }, []);
+
+  async function getSlot(){
+    if(room === "" || date === "")return;
+    const slots = ["9:00-9:30", "9:30-10:00", "10:00-10:30", "10:30-11:00", "11:00-11:30", "11:30-12:00", "1:00-1:30", "1:30-2:00", "2:00-2:30", "2:30-3:00", "3:00-3:30", "3:30-4:00"];
+    const bookedSlot = await getSlots(room, date);
+    const freeSlots = [];
+    slots.forEach((slot) => {
+      let flag = 0;
+      bookedSlot.forEach((val) => {
+        if(val.slot === slot)flag = 1;
+      });
+      if(flag === 0)freeSlots.push(slot);
+    });
+    setAvailableSlots(freeSlots);
+  }
 
   const findId = (currentRoom) => {
     if (currentRoom.roomNumber === room) {
@@ -38,11 +52,10 @@ const RoomForm = ({ roomData, update, handleClose }) => {
         event.length > 0 &&
         room.length > 0 &&
         date.length > 0 &&
-        startTime.length > 0 &&
-        endTime.length > 0
+        slot.length > 0
       )
     ) {
-      alert("Please will all the details");
+      alert("Please fill all the details");
     } else {
       const d = availableRooms.find(findId);
       const user = await auth.currentUser;
@@ -57,8 +70,7 @@ const RoomForm = ({ roomData, update, handleClose }) => {
         room,
         date,
         phoneNumber,
-        endTime,
-        startTime,
+        slot,
       };
       if (update) {
         //Update data in the database here
@@ -101,30 +113,14 @@ const RoomForm = ({ roomData, update, handleClose }) => {
         </Form.Group>
       </Form.Row>
       <Form.Row>
-        <Form.Group as={Col} controlId="formGridDate">
-          <Form.Label>Start time</Form.Label>
-          <Form.Control
-            onChange={(e) => setStartTime(e.currentTarget.value)}
-            value={startTime}
-            type="time"
-          />
-        </Form.Group>
-
-        <Form.Group as={Col} controlId="formGridDate">
-          <Form.Label>End time</Form.Label>
-          <Form.Control
-            onChange={(e) => setEndTime(e.currentTarget.value)}
-            value={endTime}
-            type="time"
-          />
-        </Form.Group>
-      </Form.Row>
-
-      <Form.Row>
-        <Form.Group as={Col} controlId="formGridRoom">
+      <Form.Group as={Col} controlId="formGridRoom">
           <Form.Label>Rooms</Form.Label>
           <Form.Control
-            onChange={(e) => setRoom(e.currentTarget.value)}
+            onChange={(e) => {
+              room = e.currentTarget.value;
+              setRoom(e.currentTarget.value);
+              getSlot();
+            }}
             as="select"
             value={room}
           >
@@ -142,13 +138,38 @@ const RoomForm = ({ roomData, update, handleClose }) => {
             )}
           </Form.Control>
         </Form.Group>
+
+      </Form.Row>
+
+      <Form.Row>
         <Form.Group as={Col} controlId="formGridDate">
           <Form.Label>Date</Form.Label>
           <Form.Control
-            onChange={(e) => setDate(e.currentTarget.value)}
+            onChange={(e) => {date = e.currentTarget.value;setDate(e.currentTarget.value);getSlot();}}
             value={date}
             type="date"
           />
+        </Form.Group>
+        <Form.Group as={Col} controlId="formGridTime">
+          <Form.Label>Start time</Form.Label>
+          <Form.Control
+            onChange={(e) => setSlotData(e.currentTarget.value)}
+            as = "select"
+            value={slot}
+          >
+            {update ? (
+              <option>{slot}</option>
+            ) : (
+              <option hidden>Select a slot</option>
+            )}
+            {availableSlots ? (
+              availableSlots.map((currentSlot, i) => {
+                return <option key={i}>{currentSlot}</option>;
+              })
+            ) : (
+              <option>Select a room</option>
+            )}
+          </Form.Control>
         </Form.Group>
       </Form.Row>
 
